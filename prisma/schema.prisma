@@ -1,0 +1,107 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum ProductType {
+  SEALED_BOX
+  BOOSTER_PACK
+  SINGLE_CARD
+  OTHER
+}
+
+enum ItemState {
+  SEALED
+  LOOSE
+}
+
+enum Condition {
+  NM
+  LP
+  MP
+  HP
+  DMG
+}
+
+enum Currency {
+  EUR
+  USD
+}
+
+enum MovementType {
+  IN
+  OUT
+}
+
+enum Channel {
+  CARDMARKET
+  EBAY
+  VINTED
+  OTHER
+}
+
+model Product {
+  id          String      @id @default(cuid())
+  name        String
+  set         String
+  cardNumber  String?
+  productType ProductType
+  itemState   ItemState
+  condition   Condition?
+  language    String
+  rarity      String?
+
+  quantity Int @default(0)
+
+  currency           Currency
+  purchasePriceCents Int
+  salePriceCents     Int?
+
+  cardmarketProductId     Int?
+  cardmarketPriceCents    Int?
+  cardmarketPriceUpdatedAt DateTime?
+
+  lowStockThreshold Int?
+  notes             String?
+
+  movements StockMovement[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([name])
+  @@index([set])
+}
+
+model StockMovement {
+  id        String       @id @default(cuid())
+  productId String
+  product   Product      @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  type     MovementType
+  quantity Int
+  channel  Channel?
+
+  unitPriceCents Int?
+  currency       Currency?
+
+  note       String?
+  occurredAt DateTime @default(now())
+
+  createdAt DateTime @default(now())
+
+  @@index([productId])
+}
+
+model Settings {
+  id                       Int      @id @default(1)
+  defaultLowStockThreshold Int      @default(3)
+  updatedAt                DateTime @updatedAt
+}
